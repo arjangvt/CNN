@@ -25,7 +25,7 @@ NB_CHANNELS = 3
 BATCH_SIZE = 1
 NB_TRAIN_IMG = 892
 NB_VALID_IMG = 107
-EPOCHS = 10
+EPOCHS = 15
 VERBOSE = 1
 
 ROTATION_RANGE = 40
@@ -109,8 +109,8 @@ def BuildModel(verbose=True):
 
 	return cnn
 
-# t: time. s: saving the model
-def RunModel(model=None, tg=None, vg=None, t=False, s=True):
+
+def TrainModel(model=None, tg=None, vg=None, t=False, s=True):
 	if t:
 		start = time.time()
 
@@ -122,21 +122,20 @@ def RunModel(model=None, tg=None, vg=None, t=False, s=True):
     	validation_data=vg,
     	validation_steps=NB_VALID_IMG//BATCH_SIZE)
 
-	eval_model = model.evaluate(vg)
-	STEP_SIZE_TEST=vg.n//vg.batch_size
-	vg.reset()
-	preds = model.predict(vg, verbose=VERBOSE)
-	#print(preds)
+	evaluate = model.evaluate(vg)
+	
 	if t:
 		end = time.time()
 		print('Processing time:',(end - start)/60)
 	if s:	
-		model.save_weights('model.h5')
+		model.save_weights('DogSnakeModel.h5', overwrite=True)
+		model.save('DogSnakeModel_all.h5', overwrite=True)
 
-	accuracy = 	preds[1]
-	loss = preds[0]
+	accuracy = 	evaluate[1]
+	loss = evaluate[0]
 	
 	return history, accuracy, loss
+
 
 # Plotting training and validation loss
 def TrainValidLossPlot(history):
@@ -164,31 +163,10 @@ def TrainValidAccuracyPlot(history):
 	plt.legend()
 	plt.show()
 
-
-
-
 train_generator, validation_generator = ReadData()
 cnn = BuildModel()
-history, accuracy, loss = RunModel(cnn, train_generator, validation_generator )
-
-
-print("on valid data")
-print("accuaracy", str(accuracy*100))
-print("Total loss",str(loss*100))
-
-print("Epoch Szie:", str(EPOCHS))
-print("Batch Size:", str(BATCH_SIZE))
-print("Image Size:", str(IMG_SIZE))
-print("Number of Channels: ", str(NB_CHANNELS))
-print("Number of Training images: ", str(NB_TRAIN_IMG))
-print("Number of Validating images: ", str(NB_VALID_IMG))
-print("Number of Validating images: ", str(NB_VALID_IMG))
-print("Rotation range: ", str(ROTATION_RANGE))
-print("Width shift range: ", str(WIDTH_SHIFT_RANGE))
-print("Height shift range: ", str(HEIGHT_SHIFT_RANGE))
-print("Shear range: ", str(SHEAR_RANGE))
-print("Zoom range: ", str(ZOOM_RANGE))
-print("Horizontal flip: ", str(HORIZONTAL_FLIP))
+history, accuracy, loss = TrainModel(cnn, train_generator, validation_generator)
+print ("Evaluation accuracy:", accuracy, "Evaluation loss:", loss)
 
 TrainValidLossPlot(history)
 TrainValidAccuracyPlot(history)
